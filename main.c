@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
-int readcnt = 0; // Счётчик активных читателей
+int readcnt = 0; // РЎС‡С‘С‚С‡РёРє Р°РєС‚РёРІРЅС‹С… С‡РёС‚Р°С‚РµР»РµР№
 
-// Все семафоры инициализируются единицей
-sem_t resourceAccess;  // Контролирует доступ на запись/чтение к общей памяти
-sem_t readCountAccess; // Отвечает за синхронизацию изменений общей переменной readcnt
-sem_t serviceQueue;    // Отвечает за честное распределение ресурсов, сохраняет порядок запросов (FIFO)
+// Р’СЃРµ СЃРµРјР°С„РѕСЂС‹ РёРЅРёС†РёР°Р»РёР·РёСЂСѓСЋС‚СЃСЏ РµРґРёРЅРёС†РµР№
+sem_t resourceAccess;  // РљРѕРЅС‚СЂРѕР»РёСЂСѓРµС‚ РґРѕСЃС‚СѓРї РЅР° Р·Р°РїРёСЃСЊ/С‡С‚РµРЅРёРµ Рє РѕР±С‰РµР№ РїР°РјСЏС‚Рё
+sem_t readCountAccess; // РћС‚РІРµС‡Р°РµС‚ Р·Р° СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЋ РёР·РјРµРЅРµРЅРёР№ РѕР±С‰РµР№ РїРµСЂРµРјРµРЅРЅРѕР№ readcnt
+sem_t serviceQueue;    // РћС‚РІРµС‡Р°РµС‚ Р·Р° С‡РµСЃС‚РЅРѕРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ СЂРµСЃСѓСЂСЃРѕРІ, СЃРѕС…СЂР°РЅСЏРµС‚ РїРѕСЂСЏРґРѕРє Р·Р°РїСЂРѕСЃРѕРІ (FIFO)
 
 char sharedString[256] = { 'H', 'e', 'l', 'l', 'o', '!', 0 };
 
@@ -21,13 +21,13 @@ void* writer(void *string)
 {
 	printf("Writer is working!\n");
 
-	sem_wait(&serviceQueue);   // Ждём в очереди на обслуживание
-	sem_wait(&resourceAccess); // Запрашиваем эксклюзивный доступ к общей памяти
-	sem_post(&serviceQueue);   // Разрешаем следующим в очереди быть обслужеными
+	sem_wait(&serviceQueue);   // Р–РґС‘Рј РІ РѕС‡РµСЂРµРґРё РЅР° РѕР±СЃР»СѓР¶РёРІР°РЅРёРµ
+	sem_wait(&resourceAccess); // Р—Р°РїСЂР°С€РёРІР°РµРј СЌРєСЃРєР»СЋР·РёРІРЅС‹Р№ РґРѕСЃС‚СѓРї Рє РѕР±С‰РµР№ РїР°РјСЏС‚Рё
+	sem_post(&serviceQueue);   // Р Р°Р·СЂРµС€Р°РµРј СЃР»РµРґСѓСЋС‰РёРј РІ РѕС‡РµСЂРµРґРё Р±С‹С‚СЊ РѕР±СЃР»СѓР¶РµРЅС‹РјРё
 
-	write((char*)string); // Запись в общую память
+	write((char*)string); // Р—Р°РїРёСЃСЊ РІ РѕР±С‰СѓСЋ РїР°РјСЏС‚СЊ
 
-	sem_post(&resourceAccess); // Освобобождаем доступ к памяти на чтение/запись
+	sem_post(&resourceAccess); // РћСЃРІРѕР±РѕР±РѕР¶РґР°РµРј РґРѕСЃС‚СѓРї Рє РїР°РјСЏС‚Рё РЅР° С‡С‚РµРЅРёРµ/Р·Р°РїРёСЃСЊ
 }
 
 void read()
@@ -39,43 +39,43 @@ void* reader()
 {
 	printf("Reader is working!\n");
 
-	sem_wait(&serviceQueue);    // Ждём в очереди на обслуживание
-	sem_wait(&readCountAccess); // Запрашиваем эксклюзивный доступ к readcnt
+	sem_wait(&serviceQueue);    // Р–РґС‘Рј РІ РѕС‡РµСЂРµРґРё РЅР° РѕР±СЃР»СѓР¶РёРІР°РЅРёРµ
+	sem_wait(&readCountAccess); // Р—Р°РїСЂР°С€РёРІР°РµРј СЌРєСЃРєР»СЋР·РёРІРЅС‹Р№ РґРѕСЃС‚СѓРї Рє readcnt
 
-	if (readcnt == 0)				// Если в данный момент читателй больше нет, то 
-		sem_wait(&resourceAccess);  // Запрашиваем доступ к памяти для читателей (писатели заблокированы)
-	readcnt++;						// Обновляем счётчик активных читателей
+	if (readcnt == 0)				// Р•СЃР»Рё РІ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ С‡РёС‚Р°С‚РµР»Р№ Р±РѕР»СЊС€Рµ РЅРµС‚, С‚Рѕ 
+		sem_wait(&resourceAccess);  // Р—Р°РїСЂР°С€РёРІР°РµРј РґРѕСЃС‚СѓРї Рє РїР°РјСЏС‚Рё РґР»СЏ С‡РёС‚Р°С‚РµР»РµР№ (РїРёСЃР°С‚РµР»Рё Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅС‹)
+	readcnt++;						// РћР±РЅРѕРІР»СЏРµРј СЃС‡С‘С‚С‡РёРє Р°РєС‚РёРІРЅС‹С… С‡РёС‚Р°С‚РµР»РµР№
 
-	sem_post(&serviceQueue);		// Разрешаем следующим в очереди быть обслужеными
-	sem_post(&readCountAccess);		// Освобождаем доступ к readcnt
+	sem_post(&serviceQueue);		// Р Р°Р·СЂРµС€Р°РµРј СЃР»РµРґСѓСЋС‰РёРј РІ РѕС‡РµСЂРµРґРё Р±С‹С‚СЊ РѕР±СЃР»СѓР¶РµРЅС‹РјРё
+	sem_post(&readCountAccess);		// РћСЃРІРѕР±РѕР¶РґР°РµРј РґРѕСЃС‚СѓРї Рє readcnt
 
-	read();							// Производим чтение
+	read();							// РџСЂРѕРёР·РІРѕРґРёРј С‡С‚РµРЅРёРµ
 
-	sem_wait(&readCountAccess);		// Запрашиваем эксклюзивный доступ к readcnt
-	readcnt--;						// Обновляем счётчик активных читателей
-	if (readcnt == 0)				// Если читателей больше не осталось, то
-		sem_post(&resourceAccess);	// Освободить доступ к памяти для всех
-	sem_post(&readCountAccess);		// Освободить доступ к readcnt
+	sem_wait(&readCountAccess);		// Р—Р°РїСЂР°С€РёРІР°РµРј СЌРєСЃРєР»СЋР·РёРІРЅС‹Р№ РґРѕСЃС‚СѓРї Рє readcnt
+	readcnt--;						// РћР±РЅРѕРІР»СЏРµРј СЃС‡С‘С‚С‡РёРє Р°РєС‚РёРІРЅС‹С… С‡РёС‚Р°С‚РµР»РµР№
+	if (readcnt == 0)				// Р•СЃР»Рё С‡РёС‚Р°С‚РµР»РµР№ Р±РѕР»СЊС€Рµ РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ, С‚Рѕ
+		sem_post(&resourceAccess);	// РћСЃРІРѕР±РѕРґРёС‚СЊ РґРѕСЃС‚СѓРї Рє РїР°РјСЏС‚Рё РґР»СЏ РІСЃРµС…
+	sem_post(&readCountAccess);		// РћСЃРІРѕР±РѕРґРёС‚СЊ РґРѕСЃС‚СѓРї Рє readcnt
 }
 
 int main()
 {
-	sem_init(&resourceAccess, 0, 1);  // Инициализация семафоров
+	sem_init(&resourceAccess, 0, 1);  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРµРјР°С„РѕСЂРѕРІ
 	sem_init(&readCountAccess, 0, 1); //
 	sem_init(&serviceQueue, 0, 1);	  //
 
-	pthread_t thread_writer1; // Идентификаторы потоков
+	pthread_t thread_writer1; // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РїРѕС‚РѕРєРѕРІ
 	pthread_t thread_writer2; //
 	pthread_t thread_reader1; //
 	pthread_t thread_reader2; //
 
-	pthread_create(&thread_writer1, NULL, writer, "Bye!");		// Инициализация потоков
+	pthread_create(&thread_writer1, NULL, writer, "Bye!");		// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїРѕС‚РѕРєРѕРІ
 	pthread_create(&thread_reader1, NULL, reader, NULL);		//
 	pthread_create(&thread_writer2, NULL, writer, "Goodbye!");	//
 	pthread_create(&thread_reader2, NULL, reader, NULL);		//
 
-	pthread_join(thread_writer1, NULL); // Ожидание завершения всех созданных потоков 
-	pthread_join(thread_reader1, NULL); // во избежания преждевременного завершения работы программы
+	pthread_join(thread_writer1, NULL); // РћР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ РІСЃРµС… СЃРѕР·РґР°РЅРЅС‹С… РїРѕС‚РѕРєРѕРІ 
+	pthread_join(thread_reader1, NULL); // РІРѕ РёР·Р±РµР¶Р°РЅРёСЏ РїСЂРµР¶РґРµРІСЂРµРјРµРЅРЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ СЂР°Р±РѕС‚С‹ РїСЂРѕРіСЂР°РјРјС‹
 	pthread_join(thread_writer2, NULL);	//
 	pthread_join(thread_reader2, NULL);	//
 
